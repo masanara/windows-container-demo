@@ -1,0 +1,55 @@
+apiVersion: apps/v1beta1
+kind: Deployment
+metadata:
+  name: aspnet-helloworld
+  labels:
+    app: aspnet-helloworld
+spec:
+  replicas: 5
+  template:
+    metadata:
+      name: aspnet-helloworld
+      labels:
+        app: aspnet-helloworld
+    spec:
+      containers:
+      - name: aspnet-helloworld
+        image: harbor.example.com/library/asp-helloworld:1.0
+        ports:
+        - containerPort: 80
+      nodeSelector:
+        "kubernetes.io/os": windows
+      tolerations:
+      - key: "windows"
+        value: "2019"
+  selector:
+    matchLabels:
+      app: aspnet-helloworld
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: aspnet-helloworld
+spec:
+  type: NodePort
+  ports:
+  - port: 80
+  selector:
+    app: aspnet-helloworld
+---
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  annotations:
+    kubernetes.io/ingress.class: nginx
+  name: asp-ingress
+  namespace: default
+spec:
+  rules:
+    - host: 10.44.58.26.xip.io
+      http:
+        paths:
+          - path: /
+            backend:
+              serviceName: aspnet-helloworld
+              servicePort: 80
